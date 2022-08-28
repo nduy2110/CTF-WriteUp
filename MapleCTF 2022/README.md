@@ -187,9 +187,9 @@ app.post('/download-ebook', (req, res) => {
     }
 });
 ```
-**/download-ebook** sẽ dùng hàm insertEmail() từ db.js
+**/download-ebook** sẽ dùng hàm **insertEmail()** từ db.js
 
-Hàm insertEmail():
+Hàm **insertEmail()**:
 ```javascript
 insertEmail(email, book_id) {
         const query = `INSERT INTO requests(email, book_id) VALUES('${email}', '${book_id}');`;
@@ -206,7 +206,7 @@ insertEmail(email, book_id) {
 ```
 Ta có thể lợi dụng hàm này để truyền vào payload thực hiện SQL injection thông qua việc input email
 
-Đầu tiên challange có validate email bằng hàm [isEmail](https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js) nên ta cần phải bypass, trong source code của [isEmail](https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js)ta thấy dòng code sau:
+Đầu tiên challange có validate email bằng hàm [isEmail](https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js) nên ta cần phải bypass, trong source code của [isEmail](https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js) ta thấy dòng code sau:
 ```javascript
  if (user[0] === '"') {
     user = user.slice(1, user.length - 1);
@@ -224,7 +224,7 @@ INSERT INTO books(title, author, price, texts) VALUES('Maple Stories', 'Maple-Ch
 Ta sẽ dùng [updatexml()](https://clbuezzz.wordpress.com/2021/12/28/xpath-error-based-injection-using-extractvalue-update-xml/) để thực hiện error-base sqli để đọc được flag
 >**_updatexml()_**: là hàm sẽ thực hiện truy vấn XPath với một chuỗi đại diện cho data XML, trong đó param đầu tiên sẽ là XML data nếu nó sai syntax thì sẽ xuất hiện error message với param thứ 2 sẽ được thực thi
 
->**_XPATH_**: [XML Path Language](https://www.w3schools.com/xml/xml_xpath.asp) được sử dụng để 
+>**_XPATH_**: [XML Path Language](https://www.w3schools.com/xml/xml_xpath.asp) (XPATH) được sử dụng để 
 điều hướng qua các elements và attributes trong tài liệu XML
 
 Payload:
