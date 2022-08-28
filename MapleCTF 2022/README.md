@@ -4,7 +4,7 @@
 
 Challange cho ta một trang web có thể nhập input để phàn nàn nếu con ngỗng có nói bậy :v 
 
-Ngoài ra challange còn cung cấp cho ta source code, sau khi tải file .zip và giải nén ta dùng docker để khởi tạo challange trên local
+Ngoài ra challange còn cung cấp cho ta source code, sau khi tải file .gz và giải nén ta dùng docker để khởi tạo challange trên local
 
 Sau khi khởi tạo challenge sẽ chạy ở port 9988 
 
