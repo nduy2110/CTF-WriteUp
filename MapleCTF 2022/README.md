@@ -235,7 +235,7 @@ Ta có thể lợi dụng hàm này để truyền vào payload thực 
       quotedEmailUser.test(user);
   }
 ```
-Đoạn code trên sẽ lấy ký tự đầu tiên của input, mà ở đây đối với payload sẽ là ký tự ". Và tiếp theo sẽ check xem " có nằm trong quotedEmailUserUtf8 hoặc quotedEmailUser hay không, mà quotedEmailUserUtf8 là mã regex chứa char code của 65519 ký tự trong bảng UTF-8, mà " có charcode là 34 nên khi input là " thì có thể bypass được isEmail
+Đoạn code trên sẽ lấy ký tự đầu tiên của input, mà ở đây đối với payload sẽ là ký tự ". Và tiếp theo sẽ check xem " có nằm trong quotedEmailUserUtf8 hoặc quotedEmailUser hay không, và quotedEmailUserUtf8 là mã regex chứa char code của 65519 ký tự trong bảng UTF-8, mà " có charcode là 34 nên do đó ta sẽ bypass được isEmail()
 
 Nhìn qua file **init.sql** ta sẽ thấy flag được lưu trong table **books**
 ```mysql
@@ -255,7 +255,7 @@ Trong đó:
 - " ' và #@gmail.com để bypass qua email validation
 - concat(1,(select texts from books limit 1)) để đọc flag từ table books
 
-Ta thêm @gmail.com để bypass đoạn sau của isEmail()
+Ta thêm @gmail.com để bypass đoạn code sau của isEmail()
 ```javascript
   const parts = str.split('@');
   const domain = parts.pop();
@@ -293,7 +293,7 @@ Ta thêm @gmail.com để bypass đoạn sau của isEmail()
     }
   }
 ```
-Đoạn code này sẽ lấy các ký tự sau dấu @ và check xem độ dài của các ký tự khi đổi sang mã URL có nằm trong khoảng 6 - 30 hay không và tất cả ký tự có nằm trong khoảng từ a-z hay không
+Đoạn code này sẽ lấy các ký tự sau dấu @ và check xem độ dài của các ký tự khi đổi sang mã URL có nằm trong khoảng 6 - 30 hay không và tất cả ký tự đó có nằm trong khoảng từ a-z hay không
 
 Kết quả:
 ![sqli-flag.png](spli-flag.png)
