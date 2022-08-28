@@ -235,7 +235,7 @@ Ta có thể lợi dụng hàm này để truyền vào payload thực 
       quotedEmailUser.test(user);
   }
 ```
-Từ đoạn code trên ta thấy nó sẽ lấy ký tự đầu tiên của input đối với payload của ta thì ký tự đó là " . Vì tham số options không được truyền vào hàm isEmail() nên mặc định options.allow_utf8_local_part sẽ là true khi đó nó sẽ check xem " có trong quotedEmailUserUtf8 hoặc quotedEmailUser hay không, mà quotedEmailUserUtf8 là mã regex chứa char code của 65519 ký tự trong bảng UTF-8 mà " có charcode là 34 nên khi input là " thì có thể bypass được isEmail
+Đoạn code trên sẽ lấy ký tự đầu tiên của input, mà ở đây đối với payload sẽ là ký tự ". Và tiếp theo sẽ check xem " có nằm trong quotedEmailUserUtf8 hoặc quotedEmailUser hay không, mà quotedEmailUserUtf8 là mã regex chứa char code của 65519 ký tự trong bảng UTF-8, mà " có charcode là 34 nên khi input là " thì có thể bypass được isEmail
 
 Nhìn qua file **init.sql** ta sẽ thấy flag được lưu trong table **books**
 ```mysql
