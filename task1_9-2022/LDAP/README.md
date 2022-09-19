@@ -9,25 +9,26 @@ LDAP còn có thể được sử dụng để **authentication**
 LDAP Injection là một lỗ hỏng xảy ra khi câu truy vấn LDAP được concat với untrusted data từ input người dùng nhập vào mà không có bất kỳ biện pháp filter hay validate nào.\
 Ví dụ câu truy vấn authentication sau: 
 ```LDAP
-find("(&(cn=" + username +")(userPassword=" + pass +"))")
+find("(&(user=" + username +")(userPassword=" + pass +"))")
 ```
-Câu truy vấn trên sẽ tìm người dùng có tên là username và mật khẩu là pass, nếu ``(cn=" + username +")`` và ``(userPassword=" + pass +")`` nhập vào là đúng, tìm được người dùng và đăng nhập thành công.\
+Câu truy vấn trên sẽ tìm người dùng có tên là username và mật khẩu là pass, nếu ``(user=" + username +")`` và ``(userPassword=" + pass +")`` nhập vào là đúng, tìm được người dùng và đăng nhập thành công.\
 Tuy nhiên nếu nhập vào ``username=*`` và ``pass=*`` thì câu truy vấn sẽ thành:
 ```
-find("(&(cn=*)(userPassword=*))")
+find("(&(user=*)(userPassword=*))")
 ```
 ``*`` trong LDAP nghĩa là "select all", nó sẽ trả về danh sách của tất cả người dùng.\
-Còn nều ta nhập vào ``username=*)(cn=*))(|(cn=*`` thì câu querry sẽ thành
+Còn nều ta nhập vào ``username=*)(user=*))(|(user=*`` thì câu querry sẽ thành
 ```
-find("(&(cn=*)(cn=*))(|(cn=*)(userPassword=" + pass +"))")
+find("(&(user=*)(user=*))(|(user=*)(userPassword=" + pass +"))")
 ```
 Câu lệnh trên sẽ luôn trả về True, ta có thể dùng nó để bypass authentication
 > Giải thích : \
-Đoạn ``(&(cn=*)(cn=*))`` yêu cầu 
-cả 2 vế ``cn=*`` đều phải bằng True do có toán tử ``& (AND)`` . Tuy nhiên ``cn=*`` nghĩa là select all nên mặc định nó luôn đúng suy ra ``(&(cn=*)(cn=*))`` sẽ luôn dúng\
-Đoạn ``((|(cn=*)(userPassword=" + pass +"))`` sẽ yêu cầu 1 trong  2 vế ``(cn=*)`` là True hoặc ``(userPassword=" + pass +"))`` là True vì nó sử dụng toán tử ``|(OR)``. Mà ``cn=*``  luôn đúng nên đoạn truy vấn này luôn đúng
+Đoạn ``(&(user=*)(user=*))`` yêu cầu 
+cả 2 vế ``user=*`` đều phải bằng True do có toán tử ``& (AND)`` . Tuy nhiên ``user=*`` nghĩa là select all nên mặc định nó luôn đúng suy ra ``(&(user=*)(user=*))`` sẽ luôn dúng\
+Đoạn ``((|(user=*)(userPassword=" + pass +"))`` sẽ yêu cầu 1 trong  2 vế ``(user=*)`` là True hoặc ``(userPassword=" + pass +"))`` là True vì nó sử dụng toán tử ``|(OR)``. Mà ``user=*``  luôn đúng nên đoạn truy vấn này luôn đúng
 
 ## 3. Một số kiểu LDAPi
+#### A. Login bypass LDAPi
 Đầu tiên là login bypass LDAPi, chính là ví dụ ở trên đã minh họa. Ta có thể sử dụng toán tử ``&(AND)`` hoặc toàn tử ``|(OR)`` để bypass\
 Ví dụ sử dụng toán tử ``&(AND)``
 ```
@@ -41,7 +42,38 @@ user=*)(|(&
 pass=aaa)
 --> (&(user=*)(|(&)(pass=aaa))
 ```
-Thứ 2 là blind LDAPi
+#### B. AND LDAPi và OR LDAPi
+AND LDAPi là thực hiện LDAPi vào câu truy vấn LDAP có sẳn toán tử ``&`` ở đầu\
+Ví dụ:
+```
+(&(user=value1)(password=value2))
+```
+Còn OR LDAPi là thực hiện LDAPi vào câu truy vấn LDAP có sẳn toán tử ``|`` ở đầu\
+Ví dụ:
+```
+(|(user=value1)(password=value2))
+```
+### C.Blind LDAPi
+Tương tự như Blind SQLi thì Blind LDAPi là dạng mà respone tiết lộ rất ít thông tin, thông thường response chỉ trả về True hoặc False hoặc chỉ hiện thông báo lỗi
+Ví dụ ta muốn brute force pass của admin, ta biết cây querry có dạng như sau:
+```
+(&(username=admin)(password='input'))
+```
+Khi nhập sai pass response chỉ hiện về thông báo sai mật khẩu\
+Ta tiến hành brute force với payload sau:
+```
+(&(username=admin)(password=*))    : OK
+(&(username=admin)(password=A*))   : KO
+(&(username=admin)(password=B*))   : KO
+...
+(&(username=admin)(password=M*))   : OK
+(&(username=admin)(password=MA*))  : KO
+(&(username=admin)(password=MB*))  : KO
+...
+```
+Cứ như vậy ta tìm được pass của admin
+
+Ngoài ra cũng có AND Blind LDAPi và OR Blind LDAPi. Ở ví dụ trên chính là AND Blind LDAPi, blind LDAPi mà querry có sẳn ``&``. Còn OR Blind LDAPi thì querry có sẳn ``|`` 
 
 ## 4. CTF Example
 ### A. LDAP injection - Authentication (Root-me) 
@@ -61,5 +93,6 @@ password=*)(&
 --> (&(uid=*)(&)(userPassword=*)(&) // luôn luôn trả về True
 ``` 
 ![chall2](./img/chall2.png)
+
 Paylaod inject thành công ta chỉ cần mở source lên và nhìn flag
 > **FLAG**: SWRwehpkTI3Vu2F9DoTJJ0LBO
