@@ -164,16 +164,19 @@ print("Final pass:",flag)
 ### C. Phonebook (HackTheBox)
 Đầu tiên trang web cho ta một form đăng nhập, và một lời nhắn từ Reese, ta đoán có thể Reese là admin
 
-![login](./img/login.png)\
+![login](./img/login.png)
+
 Khi ta thử đăng nhập với input bất kỳ thì nó trả về ``message=Authentication failed`` trong url
 
-![login](./img/failed.png)\
+![login](./img/failed.png)
+
 Thử đăng nhập với ``username=*`` và ``password=*`` thì ta sẽ đăng nhập thành công và redirect ta qua trang ``/``
 
-![authen](./img/authen.png)\
+![authen](./img/authen.png)
+
 Trang ``/``
 
-![authen](./img/search.png)\
+![authen](./img/search.png)
 
 Sau một hồi vọc vạch thì ta thấy trang này chỉ có chức năng search email thông thường và có vẻ không thể khai thác được gì từ đây. Nhưng trang này cho ta biết có ``username=Reese`` tức là username của admin là ``Reese``\
 Quay trở lại trang ``login`` ta sẽ thực hiện brute force tìm password của admin (Reese)
@@ -210,7 +213,8 @@ while True:
         break  
 print(flag)
 ```
-![flag](./img/flag.png)\
+
+![flag](./img/flag.png)
 
 >**FLAG:** HTB{d1rectory_h4xx0r_is_k00l}
 
