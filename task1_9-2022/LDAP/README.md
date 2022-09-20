@@ -79,13 +79,21 @@ Ngoài ra cũng có ``and blind LDAPi`` và or ``blind LDAPi``. Ở ví du
 ### A. LDAP injection - Authentication (Root-me) 
 
 Bài này cung cấp cho ta một form login
+
 ![img of chall](./img/chall.png)
+
 Ta thử nhập username và password bất kỳ
+
 ![burp1](./img/burp1.png)
+
 Tiêu đề bài gợi ý cho ta về LDAPi ta thử nhập ``username=*`` và ``password=*``
+
 ![burp2](./img/bur2.png)
+
 Như vậy ``*`` đã bị filter, ta thử nhập ``username=)`` và ``password=)``
+
 ![burp3](./img/burp3.png)
+
 Ta nhận về error syntax của LDAP và biết được cấu trúc của câu lệnh querry, nó sẽ kiểm tra uid là ``username`` và userPassword là ``password``. Ta dùng toàn tử ``&`` để bypass với payload như sau:
 ```
 user=*)(&
@@ -101,15 +109,21 @@ Paylaod inject thành công ta chỉ cần mở source lên và nhìn flag
 Challenge cho ta một trang login dùng method POST và một trang search email người dùng dùng method GET.\
 Lướt qua trang login, ta thấy form sẽ gửi đi ``username`` và ``password`` ,ta dùng thử các payload thông thường nhưng dường như đều bị filter.\
 Thử nhập một input bất kỳ trong trang ``search`` ta nhận được:
+
 ![burp-blind-1](./img/burp-blind-1.png)
+
 Ta thấy có một user là admin, ta thử nhập input là ``admin`` :
+
 ![burp 2](./img/burp-blind-2.png)
+
 Từ respone ta dự đoán câu truy vấn LDAP có thể có dạng:
 ```
 (&(sn=*)(email=input))
 ```
 Tuy nhiên khi thử với các input khác, khi input là ```d``` thì output  vẫn cho ra kết quả:
+
 ![burp 3](./img/burp-blind-3.png)
+
 Điều này cho ta một manh mối rằng trước và sau ``input`` sẽ có ``*`` bởi vì nếu search ``d`` thì vẫn tìm thấy ``admin``. Từ đó suy ra câu lệnh truy vấn sẽ có dạng
 ```
 (&(sn=*)(email=*input*))
@@ -189,7 +203,7 @@ username=Reese&password=H*   --> OK
 username=Reese&password=Ha*  --> message=Authentication failed
 ...
 ```
-Cứ như vậy ta tìm được pass của admin, và pass của admin cũng chính là flag của challange này
+Cứ như vậy ta tìm được pass của admin, và pass của admin cũng chính là flag của challange này\
 Script brute force
 ```python
 import requests
