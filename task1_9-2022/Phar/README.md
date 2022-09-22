@@ -106,16 +106,40 @@ Nói tóm lại thì POP chain sẽ sử dụng magic methods ban đầu đ
 ## 5. Phar Deserialization
 Phar là một file trong PHP, nó tương tự như jar file trong java là một package format cho phép ta gói nhiều các tập code, các thư viện, hình ảnh,… vào một tệp\
 Cấu trúc một Phar file gồm có:
-- Stub: đơn giản chỉ là một file PHP và ít nhất phải chứa đoạn code sau: <?php __HALT_COMPILER();
+- Stub: đơn giản chỉ là một file PHP và ít nhất phải chứa đoạn code sau: ``<?php __HALT_COMPILER()>``;
 - A manifest (bảng kê khai): miêu tả khái quát nội dung sẽ có trong file
 - Nội dung chính của file
-- Chữ ký: để kiểm tra tính toàn vẹn (cái này là optional, có hay không cũng được)
+- Chữ ký: để kiểm tra tính toàn vẹn (cái này là tùy chọn, có hay không cũng được)
 
 Điểm ta cần quan tâm là mainfest, là nơi chứa metadata của phar. Nó bao gồm thông tin về archive và từng file bên trong phar. Quan trọng nhất là metadata này được lưu dưới định dạng serialize.
 
 ![This is an image](./img//metadata.png)
 
 Và khi một filesystem function gọi đến một phar file thì tất cả các metadata trên sẽ được tự động unserialize. Đây chính là logic ta có thể lợi dụng để thực hiện Phar Deserialization
+
+## 6. Khai thác Phar Deserialization
+Ta có thể tóm lại cách khai thác qua 3 bước:
+- Tìm được POP chain trong source code cần khai thác
+- Đưa được Phar file vào đối tượng cần khai thác
+- Tìm được entry point, đó là những chỗ mà các filesystem function gọi tới các Phar file do người dùng kiểm soát
+
+Code ví dụ tạo một phar file:
+```php
+    $phar = new Phar("exploit.phar");
+    
+    $phar->startBuffering();
+    
+    $phar->setStub("<?php __HALT_COMPILER(); >");                                                                                      
+    
+    $phar->setMetadata($a); //Save custom meta-data into manifest 
+    $phar->addFromString("test.txt", "test"); //Add files to be compressed 
+
+    $phar->stopBuffering(); 
+```
+Ta dùng câu lệnh sau để khởi việc tạo phar file:
+```bash
+php --define phar.readonly=0 <file_make_phar>.php  //<file_make_phar> là tên file chứa code tạo phar
+```
 
 ## Nguồn tham khảo:
 - [https://sec.vnpt.vn/2019/08/ky-thuat-khai-thac-lo-hong-phar-deserialization/](https://sec.vnpt.vn/2019/08/ky-thuat-khai-thac-lo-hong-phar-deserialization/)
