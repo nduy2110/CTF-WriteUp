@@ -1,4 +1,5 @@
 # Phar Deserialization
+# Kiến thức
 ## 1. Stream trong PHP
 Stream lần đầu được được giới thiệu ở bản PHP 4.3.0 như một cách để khái quát hóa file, network, data compression và các tiến trình khác,... những thứ mà dùng chung một tập hợp functions hoặc cách sử dụng. [Tham khảo](https://www.php.net/manual/en/intro.stream.php)\
 Stream cung cấp cho ta quyền truy cập dữ liệu theo yêu cầu. Nghĩa là ta sẽ không cần download toàn bộ nội dung file vào bộ nhớ trước khi quá trình xử lý bắt đầu. Stream sẽ đọc file theo các gói dữ liệu (chunks) và đọc theo 1 cách tuyến tính. Điều này cho phép ta tương tác với các file lớn một cách hiệu quả\
@@ -157,8 +158,7 @@ Sau khi đăng ký và login, trang web cho ta giao diện chọn bài đê�
 
 Khi bấm vào Profile ta được redirect đến trang profile cho phép ta upload ảnh avt
 
-
-![This is an image](./img/profile.pngg)
+![This is an image](./img/profile.png)
 
 Ta thử upload một ảnh bất kỳ thì được như sau:
 
@@ -183,7 +183,7 @@ Ta để ý thấy phần url có một query string là ``id`` ta thử
 Nhưng sau một hồi loay hoay mình không thể nào SQLi được ở phần này
 
 Mở source lên ngay trang này ta để ý thấy một đoạn code javascript như sau:
-```javasript
+```javascript
 function buy() {
         data = "<item><name>Exodia</name><price>20000</price></item>";
         var xhr = new XMLHttpRequest();
@@ -345,7 +345,7 @@ class Utils {
 
 Phân tích 3 file trên ta sẽ thấy xuất hiện một POP chain.
 1.  Đầu tiên object ``database`` sẽ gọi tới``__wakeup()`` khi nó được deserialize. Magic method ``__wakeup()`` sẽ echo ra một string và concat object ``database`` với string đó
-2. Ta thay object database bằng object của class ``user``, vì nó được concat với 1 string nên hàm ``__toString()`` của ``user`` sẽ được gọi
+2. Ta thay object ``database`` bằng object của class ``user``, vì nó được concat với 1 string nên hàm ``__toString()`` của ``user`` sẽ được gọi
 3. Khi ``__toString()`` được thực hiện nó sẽ gọi đến ``$this->avatar->url``. Ta thay object ``avatar`` bằng object của class ``utils``
 4. Vậy ``$this->avatar->url`` sẽ thành ``$this->utils->url``. Tuy nhiên ``utils`` không có properties nào là url nên magic method ``__get()`` của ``utils`` sẽ được gọi
 5. Hàm ``__get()`` gọi đến ``this->$a`` và ``this->$b`` ta hoàn toàn có thể thay đổi 2 biến này để thực hiện RCE
