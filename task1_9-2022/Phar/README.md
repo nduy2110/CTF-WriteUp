@@ -353,7 +353,7 @@ Phân tích 3 file trên ta sẽ thấy xuất hiện một POP chain.
 Tuy nhiên web không hề có chức năng nhận data serialize và deserialize data đó. Ta dùng kỹ thuật Phar deserialize để thực hiện exploit.
 > Idea: Tạo một object có chứa payload, sau đó lưu object vào metadata của file Phar. Upload file Phar bằng chức năng upload của trang web. Và cuối cùng trigger file Phar bằng php wrapper thông qua lỗi xxe tại trang mua card
 
-Payload POP chain và tạo file Phar:
+Payload object và tạo file Phar:
 ```php
 <?php
 //Database class
