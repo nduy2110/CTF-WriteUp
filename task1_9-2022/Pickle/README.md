@@ -3,7 +3,7 @@
 
 ![this is image](./img/dashboard.png)
 
-Trang web bảo ta không phải là admin, và cho ta 1 đường dẫn để view log, khi nhấn vào đường dẫn:
+Trang web bảo ta không phải là admin, và cho ta 1 đường dẩn để view log, khi nhấn vào đường dẩn:
 
 ![this is image](./img/log.png)
 
@@ -33,7 +33,7 @@ print(base64.b64encode(pickle.dumps(Exploit())))
 2. Hàm này sẽ return về string hoặc tuple (khuyến khích là tuple). Khi một tuple được return thì tuple đó phải có từ 2-6 items. Trong đó item đầu sẽ là một ``callable object``. Và ``callable object`` này sẽ được gọi để khởi tạo phiên bản ban đầu của object. Item thứ 2 sẽ là một tuple con chứa các tham số của ``callable object`` ở item 1
 
 Ở payload trên thì ``callable object`` là ``subprocess.Popen`` và ``whoami`` là param của ``calable object``
-> class ``subprocess.Popen`` cho phép tạo ra một luồng mới trong ứng dụng và thực hiện chương trình con tại luồng mới đó và ``subprocess.Popen`` sẽ nhận tham số là một tuple, mỗi item là của tuple một phần của câu command bất kỳ và cuối cùng sẽ thực hiện câu command đó
+> class ``subprocess.Popen`` cho phép tạo ra một luồng mới trong ứng dụng và thực hiện chương trình con tại luồng mới đó và ``subprocess.Popen`` sẽ nhận tham số là đầu một tuple, mỗi item của tuple là một phần của câu command bất kỳ và cuối cùng sẽ thực hiện câu command đó
 
 Và cuối cùng dùng ``dumps`` để serialize và hàm ``b64encode`` để encode
 
@@ -66,7 +66,7 @@ Ta đã thực reverse shell thành công và tiến hành đọc flag:
 
 ![this is image](./img/shell.png)
 
-
+>**FLAG:** KCSC{P4dd1ng_0racl3_4tt4ck_4nd_p1ckl3_uns3r1al1ze}
 
 
 
