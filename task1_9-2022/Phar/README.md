@@ -44,7 +44,7 @@ Lỗ hổng Deserialization trong PHP hay còn gọi là PHP Object Injection, l
 ## 3. Magic method
 Magic method là các function đặc biệt trong các class của PHP, tên của các function này có hai dấu gạch dưới đứng trước, nó sẽ được gọi ngầm ở một sự kiện cụ thể, ví dụ như: __sleep(), __toString(), __construc(), …. Phần lớn trong số các function này sẽ không làm gì nếu không có sự khai báo, thiết lập của người lập trình. Ở đây có hai Magic method có thể trigger được lỗi Phar Deserialization mà ta cần quan tâm đến là:
 - ``__wakeup()``:  Được gọi khi một object được deserialize
-- ``_destruct()``: Được gọi khi một kịch bản PHP kết thúc hoặc một object không còn được dùng trong code nữa và bị hủy bỏ\
+- ``__destruct()``: Được gọi khi một kịch bản PHP kết thúc hoặc một object không còn được dùng trong code nữa và bị hủy bỏ\
 Ví dụ, ta có đoạn code sau:
 ```php
 class Demo {
@@ -413,7 +413,7 @@ class Utils {
 
 $utils = new Utils();
 $utils->a = 'system';
-$utils->b = "cat /etc/psswd";
+$utils->b = "whoami";
 $user = new User("123","123", $utils);
 $db = new Database("123","123","123",$user);
 

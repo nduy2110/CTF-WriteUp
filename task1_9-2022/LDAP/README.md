@@ -16,7 +16,7 @@ Tuy nhiên nếu nhập vào ``username=*`` và ``pass=*`` thì câu truy v
 ```
 find("(&(user=*)(userPassword=*))")
 ```
-``*`` trong LDAP là wildcard tượng trưng cho mọi ký tự hay cụ thể trong câu querry trên nó tương tự như "select all", nó sẽ trả về danh sách của tất cả người dùng.\
+``*`` trong LDAP là wildcard tượng trưng một hoặc nhiều ký tự hay cụ thể trong câu querry trên nó tương tự như "select all", nó sẽ trả về danh sách của tất cả người dùng.\
 Còn nều ta nhập vào ``username=*)(user=*))(|(user=*`` thì câu querry sẽ thành
 ```
 find("(&(user=*)(user=*))(|(user=*)(userPassword=" + pass +"))")
@@ -25,7 +25,7 @@ Câu lệnh trên sẽ luôn trả về True, ta có thể dùng nó đê�
 > Giải thích : \
 Đoạn ``(&(user=*)(user=*))`` yêu cầu 
 cả 2 vế ``user=*`` đều phải bằng True do có toán tử ``& (AND)`` . Tuy nhiên ``user=*`` nghĩa là select all nên mặc định nó luôn đúng suy ra ``(&(user=*)(user=*))`` sẽ luôn dúng\
-Đoạn ``((|(user=*)(userPassword=" + pass +"))`` sẽ yêu cầu 1 trong  2 vế ``(user=*)`` là True hoặc ``(userPassword=" + pass +"))`` là True vì nó sử dụng toán tử ``|(OR)``. Mà ``user=*``  luôn đúng nên đoạn truy vấn này luôn đúng
+Đoạn ``((|(user=*)(userPassword=" + pass +"))`` sẽ được LDAP bỏ qua, vì LDAP chỉ có thể thực hiện câu filter đầu tiên
 
 ## 3. Một số kiểu LDAPi
 #### A. Login bypass LDAPi
@@ -34,8 +34,7 @@ Sử dụng toán tử ``&(AND)``
 ```
 user=*)(&
 password=*)(&
---> (&(user=*)(&)(password=*)(&)) //cụm (&) là luôn luôn True
-```
+--> (&(user=*)(&)(password=*)(&)) //cụm (&) có giá trị là True
 Sử dụng toán tử ``|(OR)``
 ```
 user=*)(|(&
@@ -54,7 +53,7 @@ Ví dụ:
 (|(user=value1)(password=value2))
 ```
 ### C.Blind LDAPi
-Tương tự như Blind SQLi thì Blind LDAPi là dạng mà respone tiết lộ rất ít thông tin, thông thường response chỉ trả về True hoặc False hoặc chỉ hiện thông báo lỗi\
+Tương tự như Blind SQLi thì Blind LDAPi là dạng mà respone không tiết lộ hoặc tiết lộ rất ít thông tin, thông thường response chỉ trả về True hoặc False hoặc chỉ hiện thông báo lỗi\
 Ví dụ ta muốn brute force pass của admin, ta biết câu querry có dạng như sau:
 ```
 (&(username=admin)(password='input'))
@@ -73,7 +72,7 @@ Ta tiến hành brute force với payload sau:
 ```
 Cứ như vậy ta tìm được pass của admin
 
-Ngoài ra cũng có ``and blind LDAPi`` và or ``blind LDAPi``. Ở ví dụ trên chính là and blind LDAPi, blind LDAPi mà querry có sẳn ``&``. Còn or blind LDAPi thì querry có sẳn ``|`` 
+Ngoài ra cũng có ``and blind LDAPi`` và ``or blind LDAPi``. Ở ví dụ trên chính là and blind LDAPi, blind LDAPi mà querry có sẳn ``&``. Còn or blind LDAPi thì querry có sẳn ``|`` 
 
 ## 4. CTF Example
 ### A. LDAP injection - Authentication (Root-me) 
@@ -194,6 +193,7 @@ Trang ``/``
 
 Sau một hồi vọc vạch thì ta thấy trang này chỉ có chức năng search email thông thường và có vẻ không thể khai thác được gì từ đây. Nhưng trang này cho ta biết có ``username=Reese`` tức là username của admin là ``Reese``\
 Quay trở lại trang ``login`` ta sẽ thực hiện brute force tìm password của admin (Reese)
+
 Payload sẽ có dạng:
 ```
 username=Reese&password=a*   --> message=Authentication failed
@@ -204,7 +204,7 @@ username=Reese&password=Ha*  --> message=Authentication failed
 ...
 ```
 Cứ như vậy ta tìm được pass của admin, và pass của admin cũng chính là flag của challange này\
-Script brute force
+Script brute force:
 ```python
 import requests
 import string
