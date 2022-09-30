@@ -35,6 +35,7 @@ Sử dụng toán tử ``&(AND)``
 user=*)(&
 password=*)(&
 --> (&(user=*)(&)(password=*)(&)) //cụm (&) có giá trị là True
+```
 Sử dụng toán tử ``|(OR)``
 ```
 user=*)(|(&
