@@ -263,7 +263,7 @@ Ví dụ ở đây ta có một file DTD ở đường dẫn ``/usr/local
 Đầu tiên ta khai báo ``local_dtd`` để chứa nội dung của file ``schema.dtd``, vì trong file ``schema.dtd`` có một ``custome_entity`` nên ta khai báo ``custome_entity`` mới để ghi đè lên. Và nội dung của ``custome_entity`` mới này dùng để trigger error message để đọc nội dung của /etc/passwd. Cuối cùng ta gọi ``%local_dtd;`` để trigger payload
 
 #### Làm sao để biết được vị trí của file DTD trong hệ thống để thực hiện ghi đè entity?
-Thông thường, một hệ thống Linux sử dụng GNOME desktop environment sẽ lưu danh sách file DTD ở ``/usr/share/yelp/dtd/docbookx.dtd``. Ta có thể test bằng cách dùng error message để in nội dung danh sách này ra  
+Thông thường, một hệ thống Linux sử dụng GNOME desktop environment sẽ lưu danh sách file DTD ở ``/usr/share/yelp/dtd/docbookx.dtd``. Và file DTD này có custome entiy là ``ISOamsa``
 
 #### Ví dụ: Lab9 XXE injection portswigger
 Ở labs này thì vẫn là trang check stock và labs yêu cầu ta dùng kỹ thuật repurposing để trigger ra error mesage chứa nội dung của /etc/passwd.
@@ -404,6 +404,7 @@ Output:
 Ngoài ra thì XXE cũng có thể thực hiện một kỹ thuật tấn công gọi là Billion Laughs Attack. Kỹ thuật này lợi dụng việc XML parser không giới hạn dung lượng bộ nhớ mà nó có thể sử dụng, từ đó ta có thể dùng đệ quy để làm tràn bộ nhớ của target.
 
 Ví dụ một tình huống sau:
+
 Request:
 ```xml
 POST http://example.com/xml HTTP/1.1
@@ -450,10 +451,11 @@ Hello endy endy endy endy endy endy endy endy endy endy endy endy endy endy endy
 Càng nhiều biến ``name`` được đệ quy thì sẽ tiêu tốn càng nhiều bộ nhớ, và càng dễ khiến target bị tràn bộ nhớ
 
 ## 12. Cách hạn chế lỗ hổng XXE injection
-Theo portswigger thì hầu như tất cả lổ hỏng XXE đều phát sinh từ thư viện XML parser của ứng dụng hổ trợ các tính năng XML nguy hiểm mà ứng dụng không cần sử dụng tới. Cách dễ và hiệu quả nhất để ngăn chặn các cuộc tấn công XXE là vô hiệu hóa các tính năng đó.
+Theo portswigger thì hầu như tất cả lổ hổng XXE đều phát sinh từ thư viện XML parser của ứng dụng hổ trợ các tính năng XML nguy hiểm mà ứng dụng không cần sử dụng tới. Cách dễ và hiệu quả nhất để ngăn chặn các cuộc tấn công XXE là vô hiệu hóa các tính năng đó.
 
 Nói chung chỉ cần vô hiệu hóa external entities và XInclude là đủ. Điều này có thể được thực hiện bằng cách tùy chọn cấu hình hoặc ghi đè các hành vi mặc định.
 
 ## Link tham khảo:
 https://portswigger.net/web-security/xxe
+
 https://brightsec.com/blog/xxe-vulnerability/
