@@ -18,8 +18,7 @@ Dòng đầu tiên là Khai báo XML (XML declaration), nó nên có chứ khôn
 ## 2. External Entity
 ### A. Entity là gì
 Entity là một khái niệm có thể được sử dụng như một kiểu tham chiếu đến dữ liệu, cho phép thay thế một ký tự đặc biệt, một khối văn bản hay thậm chí toàn bộ nội dung một file vào trong tài liệu xml.\
-Hay có thể hiểu đơn giản việc dùng ``entity`` giống như là kh
-ai báo biến trong lập trình\
+Hay có thể hiểu đơn giản việc dùng ``entity`` giống như là khai báo biến trong lập trình\
 Entity có 2 loại là internal entity và external entity
 ### B. Internal Entity
 Internal entity là entity tham chiếu đến một giá trị được khai báo bên trong file xml\
@@ -243,7 +242,7 @@ Gửi XML đi và ta nhận về error message có chứa nội dung file
 
 Tuy nhiên sẽ ra sao nếu như ứng dụng chặn không cho thực hiện out-of-band?
 
-Trong tình huống đó thì ta vẫn có thể thực hiện trigger error message được, thông qua việc lợi dụng một lỗ hỏng của đặc tả ngôn ngữ XML. Lđược khai báo trong internal DTD sẽ được ghi đè (redefine) những entity cùng tên trong external DTD. Khi lỗ hỏng đó chính là, nếu DTD document sử dụng hổn hợp internal và external DTD, thì những entity mà ợi dụng lỗ hỏng này thì ta không cần lo tới việc parameter entity bị chặn trong internal DTD nửa
+Trong tình huống đó thì ta vẫn có thể thực hiện trigger error message được, thông qua việc lợi dụng một lỗ hỏng của đặc tả ngôn ngữ XML. Là entity được khai báo trong internal DTD sẽ được ghi đè (redefine) những entity cùng tên trong external DTD. Khi đó, nếu DTD document sử dụng hổn hợp internal và external DTD, thì những entity khai báo trong internal sẽ redefine những entity cùng tên trong file external. Khi điều này xảy ra thì ta không cần lo tới việc parameter entity bị chặn trong internal DTD nửa
 
 Tóm lại với kỹ thuật này thì attacker sẽ gọi một file external DTD trong hệ thống, và redefine những entity có trong file DTD này để trả về error message có chứa dữ liệu nhạy cảm. Mấy chốt của kỹ thuật này là ta phải tìm được trong hệ thống có những file DTD nào và tìm được entity thích hợp trong các file DTD đó để thực hiện redefine
 
