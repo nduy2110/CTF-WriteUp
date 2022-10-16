@@ -292,7 +292,7 @@ Output:
 
 
 ## 7. Xinclude attacks
-Một vài ứng dúng khi nhận dử liệu từ người dụng sẽ thực hiện nhúng dữ liệu đó vào tài liệu XML của 
+Một vài ứng dúng khi nhận dữ liệu từ người dùng sẽ thực hiện nhúng dữ liệu đó vào tài liệu XML của 
 hệ thống. Trong trường hợp này, ta không thể thực hiện XXE theo cách thông thường, bởi vì không có quyền kiếm soát cả file XML nên không thể thực hiện khai báo ``DOCTYPE`` element
 
 Tuy nhiên ta có thể dùng XInclude để attack.
