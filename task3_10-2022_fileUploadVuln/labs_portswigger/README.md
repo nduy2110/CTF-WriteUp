@@ -60,7 +60,18 @@ Upload thành công ta chỉ cần truy cập ``files/shell.php`` để trig
 
 ![lab3](./img/lab3-result.png)
 
+## Lab4 Portswigger
+Ở lab này thì vẫn là trang web tương tự các lab khác tuy nhiên lab này khi đổi ``Content-type`` vẫn ko upload được file, theo mô tả của lab thì web có blacklist sẽ chặn các file có đuôi php
 
+![lab4](./img/lab4-block.png)
+
+Ta thử dùng đuôi ``phtml``:
+
+![lab4](./img/lab4-success.png)
+
+Ta đã upload được file shell giờ chỉ cần gọi tới để trigger file
+
+![lab4](./img/lab4-result.png)
 
 
 
