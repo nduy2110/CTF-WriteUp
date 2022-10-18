@@ -73,5 +73,29 @@ Ta đã upload được file shell giờ chỉ cần gọi tới để tri
 
 ![lab4](./img/lab4-result.png)
 
+## Lab5 Portswigger
+Ở bài này mô tả gợi ý ta bypass bằng cách sử dụng kỹ thuật classic obfuscation 
+
+Đầu tiên em thử upload file php bình thường thì web báo lỗi chỉ nhận file PNG hoặc JPG
+
+![lab5](./img/lab5-error.png)
+
+Sau đó em thử double extension thành ``.php.png`` thì upload được file:
+
+![lab5](./img/lab5-double-extension.png)
+
+Upload file thành công tuy nhiên ta không thể thực hiện trigger được file, vì thế ta phải dùng cách khác
+
+Ta thử dùng ``null character``:
+
+![lab5](./img/lab5-upload-success.png)
+
+Giờ ta chỉ cần trigger đến file shell
+
+![lab5](./img/lab5-trigger.png)
+
+>Giải thích : null character là một ký tự đặc biệt có chức năng kết thúc một string hoặc ngăn cách các char. Mã URL của null byte là %00 hoặc \x00 . PHP khi xử lý file sẽ sử dụng các hàm cơ bản của C ta có thể lợi dụng điều này để thực hiện ``null character injection``
+
+> Ở bài lab trên thì khi ta upload file ``shell.php%00.png`` thì tại hàm validate của PHP nó nhận thấy có đuôi là .png nên ta bypass được, nhưng khi PHP thực thi file này thì những hàm trong C khi đọc tới ``%00`` sẽ ngầm hiểu là tên file đã kết thúc nên sẽ chỉ thực hiện ``shell.php``
 
 
