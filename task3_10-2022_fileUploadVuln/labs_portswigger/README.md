@@ -98,4 +98,76 @@ Giờ ta chỉ cần trigger đến file shell
 
 > Ở bài lab trên thì khi ta upload file ``shell.php%00.png`` thì tại hàm validate của PHP nó nhận thấy có đuôi là .png nên ta bypass được, nhưng khi PHP thực thi file này thì những hàm trong C khi đọc tới ``%00`` sẽ ngầm hiểu là tên file đã kết thúc nên sẽ chỉ thực hiện ``shell.php``
 
+## Lab6 Portswigger
+Ở lab này thì khi upload file cho dù thay đổi extension hay Content-type đều không được, theo gợi ý từ mô tả của lab thì lab sẽ check nội dung của file để validate có phải là file ảnh hay không
+
+Để bypass ta chỉ cần thêm ``GIF98`` hoặc ``GIF98A`` vào đầu file
+
+> ``GIF98`` và ``GIF98A`` là magic byte của một file ảnh. Magic byte là các bit đầu của một file giúp xác định file này thuộc định dạng nào
+
+Khi thêm ``GIF98`` vào đầu file shell thì upload thành công:
+
+![lab6](./img/lab6-upload.png)
+
+Truy cập file shell để trigger
+
+![lab6](./img/lab6-resutl.png)
+
+## Lab7 Portswigger
+Ở lab này thì mô tả gợi ý ta dùng kỷ thuật ``race condition`` để thực hiện exploit
+
+Theo code hint của lab
+```php
+<?php
+$target_dir = "avatars/";
+$target_file = $target_dir . $_FILES["avatar"]["name"];
+
+// temporary move
+move_uploaded_file($_FILES["avatar"]["tmp_name"], $target_file);
+
+if (checkViruses($target_file) && checkFileType($target_file)) {
+    echo "The file ". htmlspecialchars( $target_file). " has been uploaded.";
+} else {
+    unlink($target_file);
+    echo "Sorry, there was an error uploading your file.";
+    http_response_code(403);
+}
+
+function checkViruses($fileName) {
+    // checking for viruses
+    ...
+}
+
+function checkFileType($fileName) {
+    $imageFileType = strtolower(pathinfo($fileName,PATHINFO_EXTENSION));
+    if($imageFileType != "jpg" && $imageFileType != "png") {
+        echo "Sorry, only JPG & PNG files are allowed\n";
+        return false;
+    } else {
+        return true;
+    }
+}
+?>
+```
+
+Nếu 1 trong 2 hàm checkViruses và checkFileType false thì file sẽ bị xóa bởi hàm unlink.
+
+Idea ở đây thì ta sẽ liên tục gửi request upload file lên sever, song song đó cũng gửi request đến endpoint của file shell là ``files/avatars/shell.php``. Trong quá trình race liên tục thì ở một thread nào đó file upload chưa kịp xóa thì ta đã truy cập vào, từ đó có thể trigger file và lấy được nội dung file ``/home/carlos/secret`` theo yêu cầu của lab
+
+Ta dùng Intruder của Burp để thực hiện race, ta cho một tab chạy upload file và một tab trigger file chạy song song nhau với Payload type là ``Null payloads`` và cho số luồng là 100
+
+![lab7](./img/lab7-null-type.png)
+
+![lab7](./img/lab7-thread.png)
+
+Nhấn ``Start Attack`` để thực hiện race
+
+![lab7](./img/lab7-upload.png)
+
+![lab7](./img/lab7-endpoint.png)
+
+Ta truy cập vào một request bất kỳ có status code là 200 để xem response
+
+![lab7](./img/lab7-response.png)
+
 
