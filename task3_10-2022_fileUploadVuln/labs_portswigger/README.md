@@ -171,3 +171,12 @@ Ta truy cập vào một request bất kỳ có status code là 200 để
 ![lab7](./img/lab7-response.png)
 
 
+## Ngoài ra 2 tuần qua em học được cực nhiều kiến thức hay ho, nhưng vì deadline dí quá nên chỉ liệt kê ở đây, đến CN em sẽ thuyết trình sau nhé 
+1. Zipslip 
+2. Từ LFI to RCE bằng log poisoning (này ảo vcl)
+3. Từ LFI to RCE bằng session id (này cũng ảo vcl)
+4. Từ symlink có thể RCE bằng cách ghi file (này cũng ảo nữa)
+5. Cách blind command injection
+6. Command injection bằng một số cách bypass không có trên gg  
+7. SQLi bypass escape bằng gbk
+8. Tư duy học bảo mật và các nhìn đa chiều về untrusted data
